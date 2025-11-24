@@ -1,16 +1,16 @@
 Pharmacy_Name,Address,Phone,Latitude,Longitude,EpiPen,Salbutamol_Inhaler,Insulin_Rapid_Acting,Glucagon_Emergency_Kit,Naloxone,Aspirin_300mg,Nitroglycerin_Tablets,Emergency_Contraception,Last_Updated
-Pharmacie de la Paix - Kimironko,KG 11 Ave Kimironko Kigali,+250788123456,-1.9536,30.1047,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,2025-11-23 10:00
-Pharmacie Conseil - City Center,KN 4 Ave near UTC Kigali,+250788234567,-1.9536,30.0606,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 08:30
-Pharmacie Bonne Santé - Remera,KG 7 Ave Remera Kigali,+250788345678,-1.9442,30.0956,Yes,Yes,No,No,No,Yes,Yes,Yes,2025-11-23 11:15
-Pharmacie du Peuple - Nyamirambo,Nyamirambo Road Kigali,+250788456789,-1.9706,30.0419,No,Yes,Yes,Yes,Yes,Yes,No,Yes,2025-11-23 09:45
-Pharmacie Moderne - Kicukiro,KK 15 Ave Kicukiro Kigali,+250788567890,-1.9892,30.1025,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 10:30
-Pharmacie La Colombe - Gikondo,KK 5 Road Gikondo Kigali,+250788678901,-1.9989,30.0828,No,Yes,Yes,No,No,Yes,Yes,Yes,2025-11-22 16:20
-Pharmacie King Faisal - Hospital,KG 544 St near King Faisal Hospital,+250788890123,-1.9475,30.0597,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 12:00
-Pharmacie Bethesda - Gisozi,KG 14 Ave Gisozi Kigali,+250788901234,-1.9289,30.1178,Yes,Yes,No,No,Yes,Yes,Yes,Yes,2025-11-23 07:30
-Pharmacie Simba - Kabeza,KK 31 Ave Kabeza Kigali,+250788012345,-2.0019,30.0994,Yes,No,Yes,Yes,No,Yes,Yes,Yes,2025-11-23 11:00
-Pharmacie Nouvelle - Kacyiru,KG 641 St Kacyiru Kigali,+250788123457,-1.9406,30.0919,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 09:00
-Pharmacie La Source - Nyarutarama,KG 9 Ave Nyarutarama Kigali,+250788234568,-1.9367,30.1225,Yes,Yes,Yes,No,No,Yes,No,Yes,2025-11-22 18:45
-Pharmacie du Centre - Muhima,KN 2 Ave Muhima Kigali,+250788345679,-1.9617,30.0689,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 10:15
-Pharmacie Amizero - Kimihurura,KG 563 St Kimihurura Kigali,+250788456780,-1.9297,30.0975,Yes,Yes,No,No,Yes,Yes,Yes,Yes,2025-11-22 14:30
-Pharmacie CHU - Butaro Road,KN 5 Road near CHUK Kigali,+250788678902,-1.9683,30.0569,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 11:45
-Pharmacie Horizon - Kanombe,KK 2 Ave Kanombe Kigali,+250788789013,-1.9647,30.1283,Yes,Yes,Yes,No,No,Yes,Yes,Yes,2025-11-23 08:00
+Pharmacie de la Paix - Kimironko,KG 11 Ave Kimironko Kigali,250788123456,-1.9536,30.1047,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,2025-11-23 10:00
+Pharmacie Conseil - City Center,KN 4 Ave near UTC Kigali,250788234567,-1.9536,30.0606,Yes,Yes,Yes,No,Yes,Yes,Yes,Yes,2025-11-24 16:24
+Pharmacie Bonne Santé - Remera,KG 7 Ave Remera Kigali,250788345678,-1.9442,30.0956,Yes,Yes,No,No,No,Yes,Yes,Yes,2025-11-23 11:15
+Pharmacie du Peuple - Nyamirambo,Nyamirambo Road Kigali,250788456789,-1.9706,30.0419,No,Yes,Yes,Yes,Yes,Yes,No,Yes,2025-11-23 09:45
+Pharmacie Moderne - Kicukiro,KK 15 Ave Kicukiro Kigali,250788567890,-1.9892,30.1025,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 10:30
+Pharmacie La Colombe - Gikondo,KK 5 Road Gikondo Kigali,250788678901,-1.9989,30.0828,No,Yes,Yes,No,No,Yes,Yes,Yes,2025-11-22 16:20
+Pharmacie King Faisal - Hospital,KG 544 St near King Faisal Hospital,250788890123,-1.9475,30.0597,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 12:00
+Pharmacie Bethesda - Gisozi,KG 14 Ave Gisozi Kigali,250788901234,-1.9289,30.1178,Yes,Yes,No,No,Yes,Yes,Yes,Yes,2025-11-23 07:30
+Pharmacie Simba - Kabeza,KK 31 Ave Kabeza Kigali,250788012345,-2.0019,30.0994,Yes,No,Yes,Yes,No,Yes,Yes,Yes,2025-11-23 11:00
+Pharmacie Nouvelle - Kacyiru,KG 641 St Kacyiru Kigali,250788123457,-1.9406,30.0919,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 09:00
+Pharmacie La Source - Nyarutarama,KG 9 Ave Nyarutarama Kigali,250788234568,-1.9367,30.1225,Yes,Yes,Yes,No,No,Yes,No,Yes,2025-11-22 18:45
+Pharmacie du Centre - Muhima,KN 2 Ave Muhima Kigali,250788345679,-1.9617,30.0689,No,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 10:15
+Pharmacie Amizero - Kimihurura,KG 563 St Kimihurura Kigali,250788456780,-1.9297,30.0975,Yes,Yes,No,No,Yes,Yes,Yes,Yes,2025-11-22 14:30
+Pharmacie CHU - Butaro Road,KN 5 Road near CHUK Kigali,250788678902,-1.9683,30.0569,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,2025-11-23 11:45
+Pharmacie Horizon - Kanombe,KK 2 Ave Kanombe Kigali,250788789013,-1.9647,30.1283,Yes,Yes,Yes,No,No,Yes,Yes,Yes,2025-11-23 08:00
