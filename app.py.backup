@@ -1,0 +1,306 @@
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+from geopy.distance import geodesic
+
+# Page config
+st.set_page_config(
+    page_title="FindMyMed Emergency",
+    page_icon="🚨",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
+# Custom CSS for styling
+st.markdown("""
+<style>
+    .stButton > button {
+        width: 100%;
+    }
+    .emergency-header {
+        background-color: #DC143C;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+    .pharmacy-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        background-color: #f9f9f9;
+    }
+    .in-stock {
+        color: #2E7D32;
+        font-weight: bold;
+    }
+    .urgent-warning {
+        background-color: #FFF3E0;
+        border-left: 4px solid #FF6F00;
+        padding: 10px;
+        margin: 10px 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Load data functions
+@st.cache_data
+def load_medicines():
+    return pd.read_csv('data/emergency_medicines.csv')
+
+@st.cache_data
+def load_pharmacies():
+    return pd.read_csv('data/emergency_pharmacies.csv')
+
+def calculate_distance(user_lat, user_lon, pharm_lat, pharm_lon):
+    """Calculate distance between user and pharmacy in km"""
+    return geodesic((user_lat, user_lon), (pharm_lat, pharm_lon)).km
+
+def get_medicine_column_name(medicine_name):
+    """Convert medicine name to CSV column name"""
+    # Remove parentheses content and special chars
+    base_name = medicine_name.split('(')[0].strip()
+    column_name = base_name.replace(' ', '_').replace('-', '_')
+    return column_name
+
+def search_pharmacies(medicine_name, pharmacies_df, user_location=None):
+    """Search pharmacies that have the medicine in stock"""
+    column_name = get_medicine_column_name(medicine_name)
+    
+    # Try to find the column (handle variations)
+    matching_cols = [col for col in pharmacies_df.columns if column_name.lower() in col.lower()]
+    
+    if not matching_cols:
+        return pd.DataFrame()
+    
+    actual_column = matching_cols[0]
+    available = pharmacies_df[pharmacies_df[actual_column] == 'Yes'].copy()
+    
+    if user_location and len(user_location) == 2:
+        available['distance_km'] = available.apply(
+            lambda row: calculate_distance(
+                user_location[0], user_location[1],
+                row['Latitude'], row['Longitude']
+            ), axis=1
+        )
+        available = available.sort_values('distance_km')
+    
+    return available
+
+def simple_triage(symptoms):
+    """Simple keyword-based symptom to medicine matching"""
+    medicines_df = load_medicines()
+    symptoms_lower = symptoms.lower()
+    
+    for _, med in medicines_df.iterrows():
+        keywords = med['Keywords'].lower().split(',')
+        matches = sum(1 for keyword in keywords if keyword.strip() in symptoms_lower)
+        if matches >= 2:  # Need at least 2 keyword matches
+            return med
+    
+    return None
+
+# Initialize session state
+if 'mode' not in st.session_state:
+    st.session_state.mode = 'home'
+if 'selected_medicine' not in st.session_state:
+    st.session_state.selected_medicine = None
+
+# Load data
+medicines_df = load_medicines()
+pharmacies_df = load_pharmacies()
+
+# ============= HOME SCREEN =============
+if st.session_state.mode == 'home':
+    st.title("🚨 FindMyMed Emergency")
+    st.caption("Life-Saving Medications in Minutes, Not Hours")
+    st.markdown("---")
+    
+    # Emergency button
+    st.markdown('<div class="emergency-header"><h1>⚡ EMERGENCY</h1><p>Tap for immediate help</p></div>', unsafe_allow_html=True)
+    
+    if st.button("🚨 I NEED HELP NOW", type="primary", use_container_width=True):
+        st.session_state.mode = 'emergency'
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 🔍 Search for Medicine")
+    
+    # Quick access buttons
+    st.write("**Quick Access:**")
+    cols = st.columns(2)
+    quick_meds = [
+        ("💉 Insulin", "Insulin Rapid-Acting"),
+        ("🫁 Inhaler", "Salbutamol Inhaler"),
+        ("💊 EpiPen", "EpiPen (Epinephrine Auto-Injector)"),
+        ("❤️ Aspirin", "Aspirin 300mg")
+    ]
+    
+    for idx, (label, med_name) in enumerate(quick_meds):
+        col = cols[idx % 2]
+        if col.button(label, use_container_width=True, key=f"quick_{idx}"):
+            med_data = medicines_df[medicines_df['Medicine_Name'] == med_name].iloc[0]
+            st.session_state.selected_medicine = med_data
+            st.session_state.mode = 'results'
+            st.rerun()
+    
+    # Search dropdown
+    st.write("**Or search by name:**")
+    medicine_names = ["Select a medicine..."] + medicines_df['Medicine_Name'].tolist()
+    selected = st.selectbox("", medicine_names, label_visibility="collapsed")
+    
+    if selected != "Select a medicine...":
+        med_data = medicines_df[medicines_df['Medicine_Name'] == selected].iloc[0]
+        st.session_state.selected_medicine = med_data
+        st.session_state.mode = 'results'
+        st.rerun()
+
+# ============= EMERGENCY MODE =============
+elif st.session_state.mode == 'emergency':
+    st.markdown('<div class="emergency-header"><h2>🚨 EMERGENCY MODE</h2></div>', unsafe_allow_html=True)
+    
+    if st.button("← Back to Home"):
+        st.session_state.mode = 'home'
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 🎤 What's happening?")
+    st.info("💡 Describe your symptoms or what you're feeling")
+    
+    symptoms = st.text_area(
+        "Type your symptoms:",
+        placeholder="Examples:\n• 'Can't breathe, chest tight, wheezing'\n• 'Throat swelling, ate peanuts, hives'\n• 'Shaky, dizzy, diabetic, low sugar'",
+        height=120,
+        key="symptoms_input"
+    )
+    
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        analyze_btn = st.button("🔍 Analyze & Find Help", type="primary", use_container_width=True)
+    with col2:
+        skip_btn = st.button("Skip", use_container_width=True)
+    
+    if analyze_btn and symptoms:
+        with st.spinner("🤖 Analyzing symptoms..."):
+            matched_med = simple_triage(symptoms)
+            
+            if matched_med is not None:
+                st.success(f"✅ Detected: **{matched_med['Condition']}**")
+                st.session_state.selected_medicine = matched_med
+                st.session_state.mode = 'emergency_results'
+                st.rerun()
+            else:
+                st.warning("⚠️ Could not identify specific medication. Please select manually below:")
+                st.session_state.mode = 'emergency_manual'
+                st.rerun()
+    
+    if skip_btn:
+        st.session_state.mode = 'emergency_manual'
+        st.rerun()
+    
+    if not symptoms and analyze_btn:
+        st.error("Please describe your symptoms first")
+
+# ============= EMERGENCY MANUAL SELECTION =============
+elif st.session_state.mode == 'emergency_manual':
+    st.markdown('<div class="emergency-header"><h2>🚨 Select Emergency Medicine</h2></div>', unsafe_allow_html=True)
+    
+    if st.button("← Back"):
+        st.session_state.mode = 'emergency'
+        st.rerun()
+    
+    st.markdown("---")
+    st.write("**Select the medicine you need:**")
+    
+    cols = st.columns(2)
+    for idx, (_, med) in enumerate(medicines_df.iterrows()):
+        col = cols[idx % 2]
+        button_text = f"{med['Medicine_Name']}\n({med['Condition']})"
+        if col.button(button_text, key=f"manual_{idx}", use_container_width=True):
+            st.session_state.selected_medicine = med
+            st.session_state.mode = 'emergency_results'
+            st.rerun()
+
+# ============= RESULTS SCREEN (Emergency & Normal) =============
+elif st.session_state.mode in ['results', 'emergency_results']:
+    is_emergency = (st.session_state.mode == 'emergency_results')
+    med = st.session_state.selected_medicine
+    
+    if is_emergency:
+        st.markdown('<div class="emergency-header"><h2>⚡ EMERGENCY</h2></div>', unsafe_allow_html=True)
+    
+    st.title(f"{'🚨' if is_emergency else '🔍'} {med['Medicine_Name']}")
+    
+    # Show time-critical warning for emergency
+    if is_emergency:
+        if med['Time_Window_Minutes'] <= 15:
+            st.error(f"⏰ **CRITICAL: {med['Time_Window_Minutes']} minute window** - Get help immediately!")
+        elif med['Time_Window_Minutes'] <= 60:
+            st.warning(f"⚠️ **Time-sensitive: {med['Time_Window_Minutes']} minute window**")
+    
+    st.info(f"**Condition:** {med['Condition']}")
+    st.caption(med['Description'])
+    
+    if st.button("← Back"):
+        st.session_state.mode = 'home'
+        st.rerun()
+    
+    st.markdown("---")
+    
+    # Search pharmacies (using center of Kigali as default location)
+    user_location = (-1.9536, 30.0606)  # Default to Kigali center
+    
+    with st.spinner("🔍 Finding pharmacies..."):
+        available_pharmacies = search_pharmacies(med['Medicine_Name'], pharmacies_df, user_location)
+    
+    if len(available_pharmacies) > 0:
+        st.success(f"✅ **{len(available_pharmacies)} pharmacies** have {med['Medicine_Name']}")
+        
+        # Show results
+        for idx, (_, pharmacy) in enumerate(available_pharmacies.iterrows()):
+            with st.container():
+                st.markdown(f"### {idx + 1}. {pharmacy['Pharmacy_Name']}")
+                
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.write(f"📍 {pharmacy['Address']}")
+                    st.write(f"📞 {pharmacy['Phone']}")
+                    if 'distance_km' in pharmacy:
+                        st.write(f"🚶 **{pharmacy['distance_km']:.1f} km** away")
+                
+                with col2:
+                    st.markdown(f"<div class='in-stock'>✓ In Stock</div>", unsafe_allow_html=True)
+                    st.caption(f"Updated: {pharmacy['Last_Updated']}")
+                
+                # Action buttons
+                col_call, col_map = st.columns(2)
+                with col_call:
+                    st.markdown(f"[📞 Call Now](tel:{pharmacy['Phone']})")
+                with col_map:
+                    maps_url = f"https://www.google.com/maps/search/?api=1&query={pharmacy['Latitude']},{pharmacy['Longitude']}"
+                    st.markdown(f"[📍 Navigate]({maps_url})")
+                
+                st.markdown("---")
+        
+        # Show alternative options for emergency mode
+        if is_emergency:
+            st.markdown("### 🚁 Alternative Options")
+            
+            st.info("**Drone Delivery** (Partnership with Zipline Rwanda)\n\nEstimated delivery: 12-15 minutes to your location\n\n*Available in Phase 2*")
+            
+            st.error("**🚑 Call Emergency Services**\n\nFor life-threatening situations, call: **912**")
+            
+            st.success("💳 **Pay Later Option**\n\nGet your medicine now, payment processed later via Mobile Money")
+    
+    else:
+        st.error(f"😟 No pharmacies currently have **{med['Medicine_Name']}** in stock")
+        
+        if is_emergency:
+            st.error("🚑 **Call Emergency Services: 912**")
+            st.info("💡 Alternative: Try nearby hospitals or health centers")
+
+# Footer
+st.markdown("---")
+st.caption("FindMyMed Emergency • Carnegie Mellon University Africa • Class of 2026 Challenge")

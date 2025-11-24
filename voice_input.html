@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .voice-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+        }
+        
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .mic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .mic-button.listening {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .status-text {
+            font-size: 16px;
+            color: #666;
+            min-height: 24px;
+        }
+        
+        .transcript {
+            font-size: 18px;
+            color: #333;
+            font-weight: 500;
+            min-height: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="voice-container">
+        <button class="mic-button" id="micButton" onclick="toggleRecording()">
+            🎤
+        </button>
+        <div class="status-text" id="status">Tap to start</div>
+        <div class="transcript" id="transcript"></div>
+    </div>
+
+    <script>
+        let recognition;
+        let isListening = false;
+        let finalTranscript = '';
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            recognition.maxAlternatives = 1;
+            
+            recognition.onstart = function() {
+                isListening = true;
+                finalTranscript = '';
+                document.getElementById('micButton').classList.add('listening');
+                document.getElementById('status').textContent = '🔴 Listening...';
+                document.getElementById('transcript').textContent = '';
+            };
+            
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                document.getElementById('transcript').innerHTML = 
+                    '<span style="color: #333">' + finalTranscript + '</span>' +
+                    '<span style="color: #999">' + interimTranscript + '</span>';
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                let errorMsg = 'Error: ';
+                if (event.error === 'no-speech') {
+                    errorMsg += 'No speech detected';
+                } else if (event.error === 'audio-capture') {
+                    errorMsg += 'Microphone not found';
+                } else {
+                    errorMsg += event.error;
+                }
+                document.getElementById('status').textContent = '❌ ' + errorMsg;
+                isListening = false;
+                document.getElementById('micButton').classList.remove('listening');
+            };
+            
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('micButton').classList.remove('listening');
+                
+                if (finalTranscript.trim()) {
+                    document.getElementById('status').textContent = '✅ Done! Click Analyze';
+                    window.parent.postMessage({
+                        isStreamlitMessage: true,
+                        type: 'streamlit:setComponentValue',
+                        value: finalTranscript.trim()
+                    }, '*');
+                } else {
+                    document.getElementById('status').textContent = 'Tap to start';
+                }
+            };
+        } else {
+            document.getElementById('status').textContent = '❌ Speech recognition not supported';
+        }
+        
+        function toggleRecording() {
+            if (!recognition) {
+                alert('Speech recognition not supported');
+                return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                finalTranscript = '';
+                document.getElementById('transcript').textContent = '';
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error('Failed to start:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

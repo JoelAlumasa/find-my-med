@@ -1,0 +1,7 @@
+streamlit==1.29.0
+pandas==2.1.4
+geopy==2.4.1
+folium==0.15.1
+streamlit-folium==0.15.1
+openai
+python-dotenv

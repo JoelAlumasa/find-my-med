@@ -1,0 +1,9 @@
+Medicine_Name,Condition,Time_Window_Minutes,Description,Keywords
+EpiPen (Epinephrine Auto-Injector),Anaphylaxis,10,"Emergency treatment for severe allergic reactions. Auto-injector delivers epinephrine to reverse life-threatening symptoms.","allergy,allergic,throat,swelling,hives,peanut,bee sting,anaphylaxis,epipen"
+Salbutamol Inhaler,Asthma Attack,20,"Rescue inhaler for acute asthma attacks. Opens airways quickly to restore breathing.","breathe,breathing,asthma,wheeze,wheezing,chest,tight,cough,inhaler"
+Insulin Rapid-Acting,Hypoglycemia,20,"Fast-acting insulin for diabetic emergencies. Critical for preventing diabetic coma.","diabetes,diabetic,sugar,shaky,dizzy,confused,sweating,insulin,blood sugar"
+Glucagon Emergency Kit,Severe Hypoglycemia,12,"Emergency treatment for severe low blood sugar when unable to swallow. Injectable glucagon raises blood sugar quickly.","diabetes,unconscious,seizure,low sugar,glucagon,severe hypoglycemia"
+Naloxone (Narcan),Opioid Overdose,3,"Emergency opioid antagonist. Rapidly reverses opioid overdose and restores breathing.","overdose,opioid,heroin,fentanyl,unconscious,not breathing,naloxone,narcan"
+Aspirin 300mg,Heart Attack,45,"First-line treatment during suspected heart attack. Thins blood and reduces clot formation while waiting for ambulance.","chest pain,heart,heart attack,pressure,crushing,left arm,jaw pain"
+Nitroglycerin Tablets,Angina/Cardiac,3,"Fast relief for angina chest pain. Dilates blood vessels to improve heart blood flow.","chest pain,angina,heart,nitroglycerin,cardiac,pressure"
+Emergency Contraception,Unprotected Intercourse,4320,"Prevents pregnancy when taken within 72 hours of unprotected sex. Most effective within 24 hours.","contraception,emergency,unprotected,morning after,plan b"
