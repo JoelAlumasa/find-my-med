@@ -409,16 +409,23 @@ def voice_input_component():
 
 # ----------------- Chronic-care helpers -----------------
 
-# For the demo, we focus on these chronic / long-term meds
 CHRONIC_MEDS = [
     "Insulin Rapid-Acting",
     "Salbutamol Inhaler",
 ]
 
-# Rough demo costs in RWF (purely illustrative for the pitch)
 CHRONIC_COSTS = {
     "Insulin Rapid-Acting": 90000,
     "Salbutamol Inhaler": 15000,
+}
+
+# Approximate Kigali locations for distance estimates
+# (purely for demo – in production we'd use the phone's GPS)
+LOCATION_OPTIONS = {
+    "CMU Africa campus (Kigali PEZ)": (-1.9354, 30.1586),
+    "Kigali City Center (UTC area)": (-1.9441, 30.0619),
+    "Kimironko (Market area)": (-1.9391, 30.1123),
+    "Nyamirambo": (-1.9530, 30.0440),
 }
 
 # ----------------- Session state -----------------
@@ -431,6 +438,9 @@ if 'voice_transcript' not in st.session_state:
     st.session_state.voice_transcript = ''
 if 'last_symptoms' not in st.session_state:
     st.session_state.last_symptoms = ''
+if 'user_location_label' not in st.session_state:
+    # Default to CMU Africa for the demo
+    st.session_state.user_location_label = "CMU Africa campus(kigali PEZ)"
 if 'pharmacy_authenticated' not in st.session_state:
     st.session_state.pharmacy_authenticated = False
 if 'current_pharmacy' not in st.session_state:
@@ -542,6 +552,13 @@ if st.session_state.mode == 'home':
                 st.session_state.mode = 'results'
                 st.rerun()
 
+    st.markdown("---")
+    st.markdown("### 🏥 Partner Pharmacies")
+    st.caption("Pharmacies can join our network and share emergency-stock updates instead of doing double data entry.")
+    if st.button("🏥 I'm a pharmacy – Join the network", use_container_width=True):
+        st.session_state.mode = 'pharmacy_partners'
+        st.rerun()
+
 # ============= EMERGENCY MODE =============
 elif st.session_state.mode == 'emergency':
     st.markdown('<div class="emergency-header"><h2>🚨 EMERGENCY MODE</h2></div>', unsafe_allow_html=True)
@@ -607,7 +624,6 @@ elif st.session_state.mode == 'emergency':
                 st.session_state.mode = 'emergency_results'
                 st.rerun()
             else:
-                # Store symptoms for display on manual screen
                 st.session_state.last_symptoms = final_symptoms
                 st.session_state.selected_medicine = None
                 st.session_state.mode = 'emergency_manual'
@@ -652,6 +668,56 @@ elif st.session_state.mode == 'chronic':
                 st.session_state.mode = 'chronic_results'
                 st.rerun()
 
+# ============= PHARMACY PARTNER FORM =============
+elif st.session_state.mode == 'pharmacy_partners':
+    st.title("🏥 Partner Pharmacy Registration")
+    st.caption("Join our network so patients and ambulances can find your emergency stock faster.")
+    
+    if st.button("← Back to Home"):
+        st.session_state.mode = 'home'
+        st.rerun()
+    
+    st.markdown("---")
+    st.info(
+        "In the MVP, pharmacy stock is loaded from CSV. This screen shows how, in reality, "
+        "a pharmacy would register and share stock updates (or we would integrate directly "
+        "with platforms like **Ishyiga** so they don't do double work)."
+    )
+    
+    with st.form("pharmacy_partner_form"):
+        name = st.text_input("Pharmacy name *", placeholder="e.g., Pharmacie du Peuple")
+        address = st.text_input("Location / address *", placeholder="e.g., KN 4 Ave near UTC")
+        phone = st.text_input("Phone number *", placeholder="+2507...")
+        email = st.text_input("Email address", placeholder="contact@pharmacy.rw")
+        hours = st.text_input("Operating hours", placeholder="Mon–Sat 8:00–20:00, Sun 9:00–17:00")
+        
+        st.markdown("**Which emergency medicines do you usually stock?**")
+        emergency_meds = st.multiselect(
+            "Select all that apply",
+            medicines_df["Medicine_Name"].tolist(),
+            default=[],
+        )
+        
+        update_freq = st.selectbox(
+            "How often can you update this information?",
+            ["Daily", "Twice per week", "Weekly", "Other"],
+        )
+        notes = st.text_area(
+            "Anything else we should know? (optional)",
+            placeholder="e.g. We already use Ishyiga; API integration preferred.",
+            height=80,
+        )
+        
+        submitted = st.form_submit_button("Submit partnership request")
+    
+    if submitted:
+        st.success("✅ Thank you! For the demo, this form does not send data anywhere.")
+        st.info(
+            "In a production system, this information would create a **pharmacy profile**, "
+            "and stock updates would be pulled automatically from the pharmacy's existing "
+            "system (Ishyiga / POS) or via a simple dashboard like this."
+        )
+
 # ============= EMERGENCY MANUAL SELECTION =============
 elif st.session_state.mode == 'emergency_manual':
     st.markdown('<div class="emergency-header"><h2>🚨 Select Emergency Medicine</h2></div>', unsafe_allow_html=True)
@@ -663,7 +729,6 @@ elif st.session_state.mode == 'emergency_manual':
     
     st.markdown("---")
     
-    # Show explanation if we came here from failed analysis
     last_symptoms = st.session_state.get("last_symptoms", "").strip()
     if last_symptoms:
         st.warning("⚠️ We couldn't confidently match your symptoms to one of our emergency medicines.")
@@ -673,7 +738,6 @@ elif st.session_state.mode == 'emergency_manual':
             "- If this feels life-threatening, **call 912 immediately**\n"
             "- Otherwise, select the medicine you need below, or consult a pharmacist/doctor"
         )
-        # Clear after showing
         st.session_state.last_symptoms = ""
     
     st.write("**Select the medicine you need:**")
@@ -692,7 +756,6 @@ elif st.session_state.mode in ['results', 'emergency_results', 'chronic_results'
     is_chronic = (st.session_state.mode == 'chronic_results')
     med = st.session_state.get('selected_medicine')
     
-    # Safety net: if somehow we got here without a medicine
     if med is None:
         st.warning("⚠️ We couldn't identify a specific medicine for your symptoms.")
         st.info(
@@ -763,15 +826,57 @@ elif st.session_state.mode in ['results', 'emergency_results', 'chronic_results'
         st.rerun()
     
     st.markdown("---")
+
+    # Location selection for distance estimates
+    st.subheader("📍 Where are you right now? (for distance estimates)")
+    loc_keys = list(LOCATION_OPTIONS.keys())
+    default_index = loc_keys.index(st.session_state.user_location_label) if st.session_state.user_location_label in loc_keys else 0
+    selected_loc_label = st.selectbox(
+        "Approximate your location in Kigali:",
+        loc_keys,
+        index=default_index,
+    )
+    st.session_state.user_location_label = selected_loc_label
+    user_location = LOCATION_OPTIONS[selected_loc_label]
+    st.caption(
+        "Distances below are estimated from the area you selected (e.g. CMU Africa, Kimironko, Nyamirambo). "
+        "In a full product we'd use your phone's GPS to calculate exact distance in real time."
+    )
     
-    user_location = (-1.9536, 30.0606)
+    st.markdown("---")
     
     with st.spinner("🔍 Finding pharmacies..."):
         available_pharmacies = search_pharmacies(med['Medicine_Name'], pharmacies_df, user_location)
     
     if len(available_pharmacies) > 0:
-        st.success(f"✅ **{len(available_pharmacies)} pharmacies** in our network have this medicine")
+        total_pharmacies = len(available_pharmacies)
+        display_limit = 5
+        displayed_pharmacies = available_pharmacies.head(display_limit)
         
+        if total_pharmacies > display_limit:
+            st.success(
+                f"✅ **{total_pharmacies} pharmacies** in our network have this medicine. "
+                f"Showing the **{display_limit} closest** first."
+            )
+        else:
+            st.success(f"✅ **{total_pharmacies} pharmacies** in our network have this medicine.")
+        
+        if 'distance_km' in available_pharmacies.columns:
+            st.caption(f"📏 Sorted by distance from **{st.session_state.user_location_label}**.")
+        
+        for idx, (_, pharmacy) in enumerate(displayed_pharmacies.iterrows()):
+            st.markdown(f"### {idx + 1}. {pharmacy['Pharmacy_Name']}")
+            
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                st.write(f"📍 {pharmacy['Address']}")
+                st.write(f"📞 {pharmacy['Phone']}")
+                if 'distance_km' in pharmacy:
+                    st.write(f"🚶 **{pharmacy['distance_km']:.1f} km** away")
+            
+            with col2:
+                st.markdown("<div class='in-stock'>✓ In Stock</div>", unsafe_allow_html=True)
+                st.caption(f"Updated: {pharmacy['Last_Updated']}")
         for idx, (_, pharmacy) in enumerate(available_pharmacies.head(5).iterrows()):
             # Enhanced pharmacy card
             distance_text = f"<div style='font-size: 1.1rem; color: #1976D2; font-weight: 600; margin: 0.5rem 0;'>🚶 {pharmacy['distance_km']:.1f} km away</div>" if 'distance_km' in pharmacy else ""
@@ -831,7 +936,12 @@ elif st.session_state.mode in ['results', 'emergency_results', 'chronic_results'
         
         if is_emergency:
             st.markdown("### 🚁 Alternative Options")
-            st.info("**SafeBoda / Zipline Delivery** (Planned Partnership)\n\n• For urgent but non-immediate cases\n• 15-30 minute delivery\n\n*Integration planned in Phase 2*")
+            st.info(
+                "**SafeBoda / Zipline Delivery** (Planned Partnership)\n\n"
+                "• For urgent but non-immediate cases\n"
+                "• 15-30 minute delivery\n\n"
+                "*Integration planned in Phase 2*"
+            )
             st.error("🚑 **Life-threatening emergency? Call 912 immediately.**")
         
         if is_chronic:
@@ -862,6 +972,40 @@ elif st.session_state.mode in ['results', 'emergency_results', 'chronic_results'
             
             st.markdown("---")
             st.success("💡 **How it works:** Present prescription → Choose payment → Pharmacy dispenses → You stay stocked!")
+
+            # Quick refill request (demo only)
+            st.markdown("### 📝 Quick Refill Request (Demo)")
+            st.caption("This flow is for the demo – it shows how a refill order would look once prescriptions are verified.")
+
+            pharmacy_names = displayed_pharmacies["Pharmacy_Name"].tolist()
+            if not pharmacy_names:
+                pharmacy_names = available_pharmacies["Pharmacy_Name"].tolist()
+
+            with st.form("refill_request_form"):
+                chosen_pharmacy = st.selectbox(
+                    "Choose pharmacy to fulfill your refill:",
+                    pharmacy_names,
+                )
+                quantity = st.selectbox("How many packs do you need?", [1, 2, 3, 4], index=0)
+                delivery_option = st.radio(
+                    "Delivery option:",
+                    ["Pick up at pharmacy", "Home delivery (SafeBoda / Zipline – Phase 2)"],
+                )
+                phone = st.text_input("Your phone number (for confirmation SMS)", placeholder="+2507...")
+                extra_notes = st.text_area(
+                    "Notes for pharmacist (e.g., existing prescription, insurance)", height=80
+                )
+                submit_refill = st.form_submit_button("Submit refill request (demo)")
+
+            if submit_refill:
+                st.success(
+                    "✅ Refill request captured for demo purposes.\n\n"
+                    f"- Medicine: **{med['Medicine_Name']}**\n"
+                    f"- Pharmacy: **{chosen_pharmacy}**\n"
+                    f"- Quantity: **{quantity}**\n"
+                    f"- Delivery: **{delivery_option}**\n\n"
+                    "In production, this would be sent securely to the pharmacy after your prescription is verified."
+                )
     
     else:
         st.error(f"😟 We identified **{med['Medicine_Name']}** for **{med['Condition']}**, but no pharmacies in our network show it in stock.")
