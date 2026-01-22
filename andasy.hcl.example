@@ -1,0 +1,18 @@
+# Example Andasy configuration
+# If the format below doesn't work, try running:
+# andasy setup
+# This will auto-generate the correct andasy.hcl file
+
+app_name = "find-my-med"
+
+compute {
+  type = "container"
+  dockerfile = "Dockerfile"
+}
+
+process {
+  name = "web"
+  command = ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+  port = 8501
+}
+
